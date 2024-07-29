@@ -53,7 +53,7 @@ The following steps will guide you through the process of setting up an MQTT bro
 
 4. Click **"Save hostname"** to finalize the configuration.
 
-### Step 5: Spin up the Containers
+### Step 4: Spin up the Containers
 
 ```bash
 docker compose up
