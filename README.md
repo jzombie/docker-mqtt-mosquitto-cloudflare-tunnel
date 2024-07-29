@@ -38,10 +38,9 @@ The following steps will guide you through the process of setting up an MQTT bro
 
   Create an `.env` file in the base directory of this repo, and add `CLOUDFLARE_TUNNEL_TOKEN=your_token`.  See [.env.sample](.env.sample) for example.
 
-### Step 3: Configure the Tunnel
-1. Follow the instructions to run the Docker command on your local machine to establish the tunnel connection.
+  _Note: You do not need to run the provided Docker command on the screen. This repository replaces that step._
 
-### Step 4: Set Up Public Hostname
+### Step 3: Set Up Public Hostname
 1. After running the connector, navigate to the **"Tunnels"** section again and select the newly created tunnel.
 2. Click on **"Next"** to proceed to the hostname configuration.
 
