@@ -5,7 +5,10 @@ services:
     image: eclipse-mosquitto:latest
     container_name: mosquitto
     volumes:
-      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./mosquitto/aclfile:/mosquitto/config/aclfile
+      - ./mosquitto/entrypoint.sh:/entrypoint.sh
+    entrypoint: /entrypoint.sh
     restart: unless-stopped
 
   cloudflared:

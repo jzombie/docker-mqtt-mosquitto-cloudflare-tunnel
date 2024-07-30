@@ -1,0 +1,2 @@
+# Only allow messages to be read and written within topics that match the username
+pattern readwrite %u/#
