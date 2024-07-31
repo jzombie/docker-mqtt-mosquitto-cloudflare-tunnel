@@ -11,31 +11,37 @@
 const unsigned char key[AES_KEY_SIZE / 8] = "01234567890123456789012345678901";
 const unsigned char iv[AES_BLOCK_SIZE] = "0123456789012345";
 
-static int encrypt_message(const char *input, int input_len, char *output);
-static int decrypt_message(const char *input, int input_len, char *output);
+static int encrypt_message(const char *input, int input_len, char **output);
+static int decrypt_message(const char *input, int input_len, char **output);
 static int mosquitto_message_publish_callback(int event, void *userdata, struct mosquitto_evt_message *msg);
 static int mosquitto_message_receive_callback(int event, void *userdata, struct mosquitto_evt_message *msg);
 
-static int encrypt_message(const char *input, int input_len, char *output) {
+static int encrypt_message(const char *input, int input_len, char **output) {
     EVP_CIPHER_CTX *ctx;
     int len;
     int ciphertext_len;
+
+    *output = malloc(input_len + AES_BLOCK_SIZE);
+    if (*output == NULL) return -1;
 
     if (!(ctx = EVP_CIPHER_CTX_new())) return -1;
 
     if (1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv)) {
         EVP_CIPHER_CTX_free(ctx);
+        free(*output);
         return -1;
     }
 
-    if (1 != EVP_EncryptUpdate(ctx, (unsigned char *)output, &len, (unsigned char *)input, input_len)) {
+    if (1 != EVP_EncryptUpdate(ctx, (unsigned char *)*output, &len, (unsigned char *)input, input_len)) {
         EVP_CIPHER_CTX_free(ctx);
+        free(*output);
         return -1;
     }
     ciphertext_len = len;
 
-    if (1 != EVP_EncryptFinal_ex(ctx, (unsigned char *)output + len, &len)) {
+    if (1 != EVP_EncryptFinal_ex(ctx, (unsigned char *)*output + len, &len)) {
         EVP_CIPHER_CTX_free(ctx);
+        free(*output);
         return -1;
     }
     ciphertext_len += len;
@@ -45,26 +51,32 @@ static int encrypt_message(const char *input, int input_len, char *output) {
     return ciphertext_len;
 }
 
-static int decrypt_message(const char *input, int input_len, char *output) {
+static int decrypt_message(const char *input, int input_len, char **output) {
     EVP_CIPHER_CTX *ctx;
     int len;
     int plaintext_len;
+
+    *output = malloc(input_len + AES_BLOCK_SIZE);
+    if (*output == NULL) return -1;
 
     if (!(ctx = EVP_CIPHER_CTX_new())) return -1;
 
     if (1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv)) {
         EVP_CIPHER_CTX_free(ctx);
+        free(*output);
         return -1;
     }
 
-    if (1 != EVP_DecryptUpdate(ctx, (unsigned char *)output, &len, (unsigned char *)input, input_len)) {
+    if (1 != EVP_DecryptUpdate(ctx, (unsigned char *)*output, &len, (unsigned char *)input, input_len)) {
         EVP_CIPHER_CTX_free(ctx);
+        free(*output);
         return -1;
     }
     plaintext_len = len;
 
-    if (1 != EVP_DecryptFinal_ex(ctx, (unsigned char *)output + len, &len)) {
+    if (1 != EVP_DecryptFinal_ex(ctx, (unsigned char *)*output + len, &len)) {
         EVP_CIPHER_CTX_free(ctx);
+        free(*output);
         return -1;
     }
     plaintext_len += len;
@@ -137,8 +149,8 @@ static int mosquitto_message_publish_callback(int event, void *userdata, struct 
         return MOSQ_ERR_UNKNOWN;
     }
 
-    char encrypted_msg[256];
-    int encrypted_len = encrypt_message(msg->payload, msg->payloadlen, encrypted_msg);
+    char *encrypted_msg = NULL;
+    int encrypted_len = encrypt_message(msg->payload, msg->payloadlen, &encrypted_msg);
     if (encrypted_len < 0) {
         fprintf(stderr, "Encryption failed\n");
         return MOSQ_ERR_UNKNOWN;
@@ -154,7 +166,9 @@ static int mosquitto_message_publish_callback(int event, void *userdata, struct 
 
     fprintf(stderr, "Message encrypted: %.*s\n", new_msg.payloadlen, (char *)new_msg.payload);
 
-    return mosquitto_broker_publish(NULL, new_msg.topic, new_msg.payloadlen, new_msg.payload, new_msg.qos, new_msg.retain, NULL);
+    int result = mosquitto_broker_publish(NULL, new_msg.topic, new_msg.payloadlen, new_msg.payload, new_msg.qos, new_msg.retain, NULL);
+    free(encrypted_msg);
+    return result;
 }
 
 static int mosquitto_message_receive_callback(int event, void *userdata, struct mosquitto_evt_message *msg) {
@@ -165,8 +179,8 @@ static int mosquitto_message_receive_callback(int event, void *userdata, struct 
         return MOSQ_ERR_UNKNOWN;
     }
 
-    char decrypted_msg[256];
-    int decrypted_len = decrypt_message(msg->payload, msg->payloadlen, decrypted_msg);
+    char *decrypted_msg = NULL;
+    int decrypted_len = decrypt_message(msg->payload, msg->payloadlen, &decrypted_msg);
     if (decrypted_len < 0) {
         fprintf(stderr, "Decryption failed\n");
         return MOSQ_ERR_UNKNOWN;
@@ -182,5 +196,7 @@ static int mosquitto_message_receive_callback(int event, void *userdata, struct 
 
     fprintf(stderr, "Message decrypted: %.*s\n", new_msg.payloadlen, (char *)new_msg.payload);
 
-    return mosquitto_broker_publish(NULL, new_msg.topic, new_msg.payloadlen, new_msg.payload, new_msg.qos, new_msg.retain, NULL);
+    int result = mosquitto_broker_publish(NULL, new_msg.topic, new_msg.payloadlen, new_msg.payload, new_msg.qos, new_msg.retain, NULL);
+    free(decrypted_msg);
+    return result;
 }
