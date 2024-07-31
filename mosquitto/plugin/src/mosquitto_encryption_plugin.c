@@ -24,35 +24,43 @@ static int encrypt_message(const char *input, int input_len, char **output) {
     fprintf(stderr, "Encrypting message: %s\n", input);
 
     *output = (char *)malloc(input_len + AES_BLOCK_SIZE);
-    if (*output == NULL) return -1;
+    if (*output == NULL) {
+        fprintf(stderr, "Failed to allocate memory for encryption\n");
+        return -1;
+    }
 
-    if (!(ctx = EVP_CIPHER_CTX_new())) return -1;
+    if (!(ctx = EVP_CIPHER_CTX_new())) {
+        fprintf(stderr, "Failed to create cipher context\n");
+        free(*output);
+        return -1;
+    }
 
     if (1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv)) {
+        fprintf(stderr, "Encryption initialization failed\n");
         EVP_CIPHER_CTX_free(ctx);
+        free(*output);
         return -1;
     }
 
     if (1 != EVP_EncryptUpdate(ctx, (unsigned char *)*output, &len, (unsigned char *)input, input_len)) {
+        fprintf(stderr, "Encryption update failed\n");
         EVP_CIPHER_CTX_free(ctx);
+        free(*output);
         return -1;
     }
     ciphertext_len = len;
 
     if (1 != EVP_EncryptFinal_ex(ctx, (unsigned char *)*output + len, &len)) {
+        fprintf(stderr, "Encryption finalization failed\n");
         EVP_CIPHER_CTX_free(ctx);
+        free(*output);
         return -1;
     }
     ciphertext_len += len;
 
     EVP_CIPHER_CTX_free(ctx);
 
-    fprintf(stderr, "Encrypted message: ");
-    for (int i = 0; i < ciphertext_len; i++) {
-        fprintf(stderr, "%02x", (unsigned char)(*output)[i]);
-    }
-    fprintf(stderr, "\n");
-
+    fprintf(stderr, "Encrypted message length: %d\n", ciphertext_len);
     return ciphertext_len;
 }
 
@@ -61,30 +69,39 @@ static int decrypt_message(const char *input, int input_len, char **output) {
     int len;
     int plaintext_len;
 
-    fprintf(stderr, "Decrypting message: ");
-    for (int i = 0; i < input_len; i++) {
-        fprintf(stderr, "%02x", (unsigned char)input[i]);
-    }
-    fprintf(stderr, "\n");
+    fprintf(stderr, "Decrypting message with length: %d\n", input_len);
 
     *output = (char *)malloc(input_len);
-    if (*output == NULL) return -1;
+    if (*output == NULL) {
+        fprintf(stderr, "Failed to allocate memory for decryption\n");
+        return -1;
+    }
 
-    if (!(ctx = EVP_CIPHER_CTX_new())) return -1;
+    if (!(ctx = EVP_CIPHER_CTX_new())) {
+        fprintf(stderr, "Failed to create cipher context\n");
+        free(*output);
+        return -1;
+    }
 
     if (1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv)) {
+        fprintf(stderr, "Decryption initialization failed\n");
         EVP_CIPHER_CTX_free(ctx);
+        free(*output);
         return -1;
     }
 
     if (1 != EVP_DecryptUpdate(ctx, (unsigned char *)*output, &len, (unsigned char *)input, input_len)) {
+        fprintf(stderr, "Decryption update failed\n");
         EVP_CIPHER_CTX_free(ctx);
+        free(*output);
         return -1;
     }
     plaintext_len = len;
 
     if (1 != EVP_DecryptFinal_ex(ctx, (unsigned char *)*output + len, &len)) {
+        fprintf(stderr, "Decryption finalization failed\n");
         EVP_CIPHER_CTX_free(ctx);
+        free(*output);
         return -1;
     }
     plaintext_len += len;
@@ -94,7 +111,6 @@ static int decrypt_message(const char *input, int input_len, char **output) {
     (*output)[plaintext_len] = '\0';
 
     fprintf(stderr, "Decrypted message: %s\n", *output);
-
     return plaintext_len;
 }
 
@@ -107,8 +123,15 @@ static mosquitto_plugin_id_t *mosquitto_id;
 int mosquitto_plugin_init(mosquitto_plugin_id_t *identifier, void **userdata, struct mosquitto_opt *options, int option_count) {
     fprintf(stderr, "Plugin initialized\n");
     mosquitto_id = identifier;
-    mosquitto_callback_register(mosquitto_id, MOSQ_EVT_MESSAGE, mosquitto_message_publish_callback, userdata, NULL);
-    mosquitto_callback_register(mosquitto_id, MOSQ_EVT_MESSAGE, mosquitto_message_receive_callback, userdata, NULL);
+    int rc;
+    rc = mosquitto_callback_register(mosquitto_id, MOSQ_EVT_MESSAGE, mosquitto_message_publish_callback, userdata, NULL);
+    if (rc != MOSQ_ERR_SUCCESS) {
+        fprintf(stderr, "Failed to register publish callback: %d\n", rc);
+    }
+    rc = mosquitto_callback_register(mosquitto_id, MOSQ_EVT_MESSAGE, mosquitto_message_receive_callback, userdata, NULL);
+    if (rc != MOSQ_ERR_SUCCESS) {
+        fprintf(stderr, "Failed to register receive callback: %d\n", rc);
+    }
     return MOSQ_ERR_SUCCESS;
 }
 
@@ -143,27 +166,41 @@ int mosquitto_auth_acl_check(void *userdata, int access, struct mosquitto *clien
 }
 
 // Define the callback functions with correct signatures
-mosquitto_message_publish_callbackstatic int (int event, void *userdata, void *message) {
+static int mosquitto_message_publish_callback(int event, void *userdata, void *message) {
     struct mosquitto_message *msg = (struct mosquitto_message *)message;
+    fprintf(stderr, "mosquitto_message_publish_callback triggered\n");
     fprintf(stderr, "Publishing message: %s\n", (char *)msg->payload);
 
     char *encrypted_msg;
     int encrypted_len = encrypt_message(msg->payload, msg->payloadlen, &encrypted_msg);
     if (encrypted_len < 0) {
+        fprintf(stderr, "Encryption failed\n");
         return MOSQ_ERR_UNKNOWN;
     }
 
+    // Log the encrypted message being sent
+    fprintf(stderr, "Sending encrypted message: ");
+    for (int i = 0; i < encrypted_len; i++) {
+        fprintf(stderr, "%02x", (unsigned char)encrypted_msg[i]);
+    }
+    fprintf(stderr, "\n");
+
     // Publish the encrypted message
     int result = mosquitto_publish((struct mosquitto *)userdata, NULL, msg->topic, encrypted_len, encrypted_msg, msg->qos, msg->retain);
+    if (result != MOSQ_ERR_SUCCESS) {
+        fprintf(stderr, "Failed to publish encrypted message: %d\n", result);
+    }
 
     // Free the allocated memory
     free(encrypted_msg);
 
+    fprintf(stderr, "Published encrypted message\n");
     return result;
 }
 
 static int mosquitto_message_receive_callback(int event, void *userdata, void *message) {
     struct mosquitto_message *msg = (struct mosquitto_message *)message;
+    fprintf(stderr, "mosquitto_message_receive_callback triggered\n");
     fprintf(stderr, "Receiving message: ");
     for (int i = 0; i < msg->payloadlen; i++) {
         fprintf(stderr, "%02x", (unsigned char)((char *)msg->payload)[i]);
@@ -173,9 +210,11 @@ static int mosquitto_message_receive_callback(int event, void *userdata, void *m
     char *decrypted_msg;
     int decrypted_len = decrypt_message(msg->payload, msg->payloadlen, &decrypted_msg);
     if (decrypted_len < 0) {
+        fprintf(stderr, "Decryption failed\n");
         return MOSQ_ERR_UNKNOWN;
     }
 
+    fprintf(stderr, "Received and decrypted message: %s\n", decrypted_msg);
     // Free the allocated memory
     free(decrypted_msg);
 
