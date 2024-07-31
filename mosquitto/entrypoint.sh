@@ -8,13 +8,10 @@ if [ -z "$ENCFS_PASSWORD" ]; then
   exit 1
 fi
 
-# Create directories for encrypted and decrypted data
-# mkdir -p /encrypted /var/lib/mosquitto
-mkdir -p /encrypted
+# mkdir -p /encrypted
 
-# Set restrictive permissions to the directories
-# chmod 700 /encrypted /var/lib/mosquitto
-chmod 700 /encrypted
+# # Set restrictive permissions
+# chmod 700 /encrypted
 
 # Initialize or mount the encrypted filesystem as the mosquitto user
 if [ ! -f /encrypted/.encfs6.xml ]; then
@@ -28,17 +25,6 @@ fi
 # # Debug: Check if encfs is mounted
 echo "Checking if encfs is mounted:"
 mount | grep encfs || echo "encfs is not mounted"
-
-# Ensure the decrypted directory is owned by the mosquitto user and is writable
-# chown -R mosquitto:mosquitto /var/lib/mosquitto
-# chmod 700 /var/lib/mosquitto
-
-# Debug: List files in decrypted and encrypted
-# echo "Contents of /var/lib/mosquitto:"
-# ls -la /var/lib/mosquitto
-
-# echo "Contents of /encrypted:"
-# ls -la /encrypted
 
 # Run Mosquitto
 exec mosquitto -c /mosquitto/config/mosquitto.conf

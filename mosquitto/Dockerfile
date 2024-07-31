@@ -13,7 +13,8 @@ RUN apk update && \
 # Create necessary directories and set permissions
 RUN mkdir -p /encrypted /var/lib/mosquitto && \
     chown -R mosquitto:mosquitto /var/lib/mosquitto && \
-    chmod -R 700 /var/lib/mosquitto
+    chmod -R 700 /var/lib/mosquitto && \
+    chmod -R 700 /encrypted
 
 # Ensure mosquitto user has a valid shell
 RUN usermod -s /bin/bash mosquitto
