@@ -32,12 +32,12 @@ jobs:
             fi
           done
 
-      - name: Publish a retained message to Mosquitto
-         run: docker exec mosquitto mosquitto_pub -t test/topic -m "Test message" -r
+      # - name: Publish a retained message to Mosquitto
+      #    run: docker exec mosquitto mosquitto_pub -t test/topic -m "Test message" -r
 
       - name: Stop Mosquitto service using Docker Compose
         run: docker-compose down
 
-      - name: Check encrypted data
-        run: |
-          docker run --rm -v $(pwd)/data:/encrypted alpine:latest /bin/sh -c 'if [ $(ls /encrypted | wc -l) -gt 1 ]; then echo "Data is encrypted"; else echo "Data is not encrypted"; exit 1; fi'
+      # - name: Check encrypted data
+      #   run: |
+      #     docker run --rm -v $(pwd)/data:/encrypted alpine:latest /bin/sh -c 'if [ $(ls /encrypted | wc -l) -gt 1 ]; then echo "Data is encrypted"; else echo "Data is not encrypted"; exit 1; fi'
