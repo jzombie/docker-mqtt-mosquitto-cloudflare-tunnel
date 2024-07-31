@@ -26,5 +26,8 @@ fi
 echo "Checking if encfs is mounted:"
 mount | grep encfs || echo "encfs is not mounted"
 
+# Move .encfs6.xml to the config directory
+mv /encrypted/.encfs6.xml /config/
+
 # Run Mosquitto
 exec mosquitto -c /mosquitto/config/mosquitto.conf
