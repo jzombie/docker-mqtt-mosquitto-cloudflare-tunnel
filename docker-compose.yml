@@ -23,7 +23,7 @@ services:
       retries: 10
     environment:
       # TODO: Adjust as neeed (but not here!)
-      GOCYPH_PASSWORD: your_secure_password_here
+      GOCRYPT_PASSWORD: your_secure_password_here
     
 
   cloudflared:

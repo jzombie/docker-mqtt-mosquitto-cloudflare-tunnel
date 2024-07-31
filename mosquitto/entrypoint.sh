@@ -2,9 +2,9 @@
 
 set -e
 
-# Ensure GOCYPH_PASSWORD is set
-if [ -z "$GOCYPH_PASSWORD" ]; then
-  echo "GOCYPH_PASSWORD is not set. Exiting."
+# Ensure GOCRYPT_PASSWORD is set
+if [ -z "$GOCRYPT_PASSWORD" ]; then
+  echo "GOCRYPT_PASSWORD is not set. Exiting."
   exit 1
 fi
 
@@ -22,11 +22,11 @@ if [ ! -f /encrypted/gocryptfs.conf ]; then
     echo \"Error: /encrypted directory is not empty. Cannot initialize.\"
     exit 1
   fi
-  echo \"$GOCYPH_PASSWORD\" | gocryptfs -init /encrypted
+  echo \"$GOCRYPT_PASSWORD\" | gocryptfs -init /encrypted
 fi
 
 echo \"Mounting encrypted filesystem\"
-echo \"$GOCYPH_PASSWORD\" | gocryptfs /encrypted /var/lib/mosquitto
+echo \"$GOCRYPT_PASSWORD\" | gocryptfs /encrypted /var/lib/mosquitto
 
 # Debug: Check if gocryptfs is mounted
 echo \"Checking if gocryptfs is mounted:\"
