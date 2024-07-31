@@ -71,7 +71,7 @@ static int decrypt_message(const char *input, int input_len, char **output) {
 
     fprintf(stderr, "Decrypting message with length: %d\n", input_len);
 
-    *output = (char *)malloc(input_len);
+    *output = (char *)malloc(input_len + 1); // +1 for null terminator
     if (*output == NULL) {
         fprintf(stderr, "Failed to allocate memory for decryption\n");
         return -1;
@@ -108,7 +108,7 @@ static int decrypt_message(const char *input, int input_len, char **output) {
 
     EVP_CIPHER_CTX_free(ctx);
 
-    (*output)[plaintext_len] = '\0';
+    (*output)[plaintext_len] = '\0'; // Null-terminate the string
 
     fprintf(stderr, "Decrypted message: %s\n", *output);
     return plaintext_len;
@@ -169,9 +169,13 @@ int mosquitto_auth_acl_check(void *userdata, int access, struct mosquitto *clien
 static int mosquitto_message_publish_callback(int event, void *userdata, void *message) {
     struct mosquitto_message *msg = (struct mosquitto_message *)message;
     fprintf(stderr, "mosquitto_message_publish_callback triggered\n");
+    if (!msg || !msg->payload) {
+        fprintf(stderr, "Invalid message or payload\n");
+        return MOSQ_ERR_UNKNOWN;
+    }
     fprintf(stderr, "Publishing message: %s\n", (char *)msg->payload);
 
-    char *encrypted_msg;
+    char *encrypted_msg = NULL;
     int encrypted_len = encrypt_message(msg->payload, msg->payloadlen, &encrypted_msg);
     if (encrypted_len < 0) {
         fprintf(stderr, "Encryption failed\n");
@@ -201,13 +205,17 @@ static int mosquitto_message_publish_callback(int event, void *userdata, void *m
 static int mosquitto_message_receive_callback(int event, void *userdata, void *message) {
     struct mosquitto_message *msg = (struct mosquitto_message *)message;
     fprintf(stderr, "mosquitto_message_receive_callback triggered\n");
+    if (!msg || !msg->payload) {
+        fprintf(stderr, "Invalid message or payload\n");
+        return MOSQ_ERR_UNKNOWN;
+    }
     fprintf(stderr, "Receiving message: ");
     for (int i = 0; i < msg->payloadlen; i++) {
         fprintf(stderr, "%02x", (unsigned char)((char *)msg->payload)[i]);
     }
     fprintf(stderr, "\n");
 
-    char *decrypted_msg;
+    char *decrypted_msg = NULL;
     int decrypted_len = decrypt_message(msg->payload, msg->payloadlen, &decrypted_msg);
     if (decrypted_len < 0) {
         fprintf(stderr, "Decryption failed\n");
