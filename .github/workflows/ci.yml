@@ -35,8 +35,7 @@ jobs:
           exit 1
 
       - name: Publish a retained message to Mosquitto
-        run: |
-          docker exec mosquitto mosquitto_pub -t test/topic -m "Test message" -h localhost -p 1883 -r
+        run: docker exec mosquitto mosquitto_pub -t test/topic -m "Test message" -r
 
       - name: Stop Mosquitto service using Docker Compose
         run: docker-compose down
