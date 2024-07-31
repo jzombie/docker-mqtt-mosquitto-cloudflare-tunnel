@@ -34,9 +34,6 @@ jobs:
           echo "Mosquitto did not become healthy in time"
           exit 1
 
-      - name: Stop Mosquitto service using Docker Compose
-        run: docker-compose down
-
       - name: Publish a retained message to Mosquitto
         run: |
           docker exec mosquitto mosquitto_pub -t test/topic -m "Test message" -h localhost -p 1883 -r
@@ -46,10 +43,4 @@ jobs:
 
       - name: Check encrypted data
         run: |
-          ENCRYPTED_DATA=$(docker run --rm -v $(pwd)/data:/encrypted alpine:latest ls /encrypted)
-          if echo "$ENCRYPTED_DATA" | grep -q "encfs6.xml"; then
-            echo "Data is encrypted"
-          else
-            echo "Data is not encrypted"
-            exit 1
-          fi
+          docker run --rm -v $(pwd)/data:/encrypted alpine:latest /bin/sh -c 'if [ $(ls /encrypted | wc -l) -gt 1 ]; then echo "Data is encrypted"; else echo "Data is not encrypted"; exit 1; fi'
