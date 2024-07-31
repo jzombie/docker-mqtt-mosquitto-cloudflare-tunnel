@@ -2,20 +2,19 @@ version: '3.8'
 
 services:
   mosquitto:
-    image: eclipse-mosquitto:latest
+    build: ./mosquitto
     container_name: mosquitto
     volumes:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
       - ./mosquitto/aclfile:/mosquitto/config/aclfile
-      - ./mosquitto/entrypoint.sh:/entrypoint.sh
       - ./data/:/var/lib/mosquitto/
+    restart: unless-stopped
     entrypoint: /entrypoint.sh
-    restart: unless-stopped
 
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: cloudflared
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
-    restart: unless-stopped
-    environment:
-      - CLOUDFLARE_TUNNEL_TOKEN
+  # cloudflared:
+  #   image: cloudflare/cloudflared:latest
+  #   container_name: cloudflared
+  #   command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+  #   restart: unless-stopped
+  #   environment:
+  #     - CLOUDFLARE_TUNNEL_TOKEN
