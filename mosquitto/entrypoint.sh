@@ -2,27 +2,36 @@
 
 set -e
 
-# Ensure ENCFS_PASSWORD is set
-if [ -z "$ENCFS_PASSWORD" ]; then
-  echo "ENCFS_PASSWORD is not set. Exiting."
+# Ensure GOCRYPT_PASSWORD is set
+if [ -z "$GOCRYPT_PASSWORD" ]; then
+  echo "GOCRYPT_PASSWORD is not set. Exiting."
   exit 1
 fi
 
+# Create /var/lib/mosquitto directory if not exists
+mkdir -p /var/lib/mosquitto
+
+# Adjust permissions for the mosquitto user
+chown mosquitto:mosquitto /var/lib/mosquitto /encrypted
+
 # Initialize or mount the encrypted filesystem as the mosquitto user
-if [ ! -f /encrypted/.encfs6.xml ]; then
-  echo "Initializing encrypted filesystem"
-  su mosquitto -c "echo \"$ENCFS_PASSWORD\" | encfs --standard --stdinpass /encrypted /var/lib/mosquitto --verbose"
-else
-  echo "Mounting encrypted filesystem"
-  su mosquitto -c "echo \"$ENCFS_PASSWORD\" | encfs --stdinpass /encrypted /var/lib/mosquitto --verbose"
+su mosquitto -c "
+if [ ! -f /encrypted/gocryptfs.conf ]; then
+  echo \"Initializing encrypted filesystem\"
+  if [ \"\$(ls -A /encrypted)\" ]; then
+    echo \"Error: /encrypted directory is not empty. Cannot initialize.\"
+    exit 1
+  fi
+  echo \"$GOCRYPT_PASSWORD\" | gocryptfs -init /encrypted
 fi
 
-# # Debug: Check if encfs is mounted
-echo "Checking if encfs is mounted:"
-mount | grep encfs || echo "encfs is not mounted"
+echo \"Mounting encrypted filesystem\"
+echo \"$GOCRYPT_PASSWORD\" | gocryptfs /encrypted /var/lib/mosquitto
 
-# Move .encfs6.xml to the config directory
-mv /encrypted/.encfs6.xml /config/
+# Debug: Check if gocryptfs is mounted
+echo \"Checking if gocryptfs is mounted:\"
+mount | grep gocryptfs || echo \"gocryptfs is not mounted\"
+"
 
-# Run Mosquitto
-exec mosquitto -c /mosquitto/config/mosquitto.conf
+# Run Mosquitto as the mosquitto user
+exec su mosquitto -c "mosquitto -c /mosquitto/config/mosquitto.conf"

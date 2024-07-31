@@ -8,7 +8,6 @@ services:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
       - ./mosquitto/aclfile:/mosquitto/config/aclfile
       - ./data:/encrypted
-      - ./config:/config
     restart: unless-stopped
     entrypoint: /entrypoint.sh
     cap_add:
@@ -24,7 +23,7 @@ services:
       retries: 10
     environment:
       # TODO: Adjust as neeed (but not here!)
-      ENCFS_PASSWORD: your_secure_password_here
+      GOCRYPT_PASSWORD: your_secure_password_here
     
 
   cloudflared:
