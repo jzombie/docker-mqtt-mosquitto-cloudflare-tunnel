@@ -90,6 +90,8 @@ int mosquitto_plugin_version(int supported_version_count, const int *supported_v
 
 static mosquitto_plugin_id_t *mosquitto_id;
 
+// https://github.com/eclipse/mosquitto/issues/2219
+// https://github.com/eclipse/mosquitto/blob/master/src/plugin.c
 int mosquitto_plugin_init(mosquitto_plugin_id_t *identifier, void **userdata, struct mosquitto_opt *options, int option_count) {
     fprintf(stderr, "Plugin initialized\n");
     mosquitto_id = identifier;
@@ -147,6 +149,8 @@ static int mosquitto_message_save_callback(int event, void *userdata, struct mos
         return MOSQ_ERR_UNKNOWN;
     }
 
+    fprintf(stderr, "Message: %.*s\n", msg->payloadlen, (char *)msg->payload);
+
     char *encrypted_msg = NULL;
     int encrypted_len = encrypt_message(msg->payload, msg->payloadlen, &encrypted_msg);
     if (encrypted_len < 0) {
@@ -165,22 +169,25 @@ static int mosquitto_message_save_callback(int event, void *userdata, struct mos
 static int mosquitto_message_load_callback(int event, void *userdata, struct mosquitto_evt_message *msg) {
     fprintf(stderr, "mosquitto_message_load_callback triggered\n");
 
+    msg->payloadlen = 5;
+    msg->payload = "hello";
+
     if (!msg || !msg->payload) {
         fprintf(stderr, "Invalid message pointer or payload is NULL\n");
         return MOSQ_ERR_UNKNOWN;
     }
 
-    char *decrypted_msg = NULL;
-    int decrypted_len = decrypt_message(msg->payload, msg->payloadlen, &decrypted_msg);
-    if (decrypted_len < 0) {
-        fprintf(stderr, "Decryption failed\n");
-        return MOSQ_ERR_UNKNOWN;
-    }
+    // char *decrypted_msg = NULL;
+    // int decrypted_len = decrypt_message(msg->payload, msg->payloadlen, &decrypted_msg);
+    // if (decrypted_len < 0) {
+    //     fprintf(stderr, "Decryption failed\n");
+    //     return MOSQ_ERR_UNKNOWN;
+    // }
 
-    msg->payload = decrypted_msg;
-    msg->payloadlen = decrypted_len;
+    // msg->payload = decrypted_msg;
+    // msg->payloadlen = decrypted_len;
 
     fprintf(stderr, "Message decrypted after loading: %.*s\n", msg->payloadlen, (char *)msg->payload);
-    free(decrypted_msg);
+    // free(decrypted_msg);
     return MOSQ_ERR_SUCCESS;
 }
