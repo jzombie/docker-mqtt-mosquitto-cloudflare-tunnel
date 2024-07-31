@@ -23,23 +23,12 @@ jobs:
       - name: Wait for Mosquitto to be healthy
         run: |
           for i in {1..10}; do
-            STATUS=$(docker inspect --format='{{.State.Status}}' mosquitto)
-            if [ "$STATUS" = "running" ]; then
-              echo "Mosquitto container is running"
-              if docker exec mosquitto mosquitto_pub -t test/topic -m "health check" -r; then
-                echo "Mosquitto is ready"
-                break
-              else
-                echo "Mosquitto is not ready yet, retrying..."
-                sleep 10
-              fi
-            elif [ "$STATUS" = "restarting" ]; then
-              echo "Mosquitto container is restarting"
-              sleep 10
+            if [ "$(docker inspect --format='{{.State.Health.Status}}' mosquitto)" = "healthy" ]; then
+              echo "Mosquitto is healthy"
+              break
             else
-              echo "Mosquitto container is in unexpected state: $STATUS"
-              docker logs mosquitto
-              exit 1
+              echo "Waiting for Mosquitto to be healthy..."
+              sleep 10
             fi
           done
 

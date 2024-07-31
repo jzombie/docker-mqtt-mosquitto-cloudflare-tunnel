@@ -16,9 +16,15 @@ services:
       - apparmor:unconfined
     devices:
       - /dev/fuse
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-t", "health", "-m", "health check"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     environment:
       # TODO: Adjust as neeed (but not here!)
       ENCFS_PASSWORD: your_secure_password_here
+    
 
   cloudflared:
     image: cloudflare/cloudflared:latest
