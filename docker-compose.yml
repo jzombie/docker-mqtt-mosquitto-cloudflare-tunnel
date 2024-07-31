@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mosquitto:
     build: ./mosquitto
@@ -8,6 +6,7 @@ services:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
       - ./mosquitto/aclfile:/mosquitto/config/aclfile
       - ./data:/encrypted
+      - ./config:/config
     restart: unless-stopped
     entrypoint: /entrypoint.sh
     cap_add:

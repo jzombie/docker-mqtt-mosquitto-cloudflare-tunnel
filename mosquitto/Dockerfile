@@ -9,7 +9,8 @@ RUN apk update && \
     encfs \
     mosquitto \
     mosquitto-clients \
-    shadow
+    shadow \
+    expect
 
 # Create necessary directories and set permissions
 RUN mkdir -p /encrypted /var/lib/mosquitto && \
