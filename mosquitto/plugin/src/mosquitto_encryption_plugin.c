@@ -3,6 +3,7 @@
 #include <openssl/evp.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #define AES_KEY_SIZE 256
 #define AES_BLOCK_SIZE 16
@@ -14,6 +15,8 @@ static int encrypt_message(const char *input, int input_len, char **output) {
     EVP_CIPHER_CTX *ctx;
     int len;
     int ciphertext_len;
+
+    fprintf(stderr, "Encrypting message: %s\n", input);
 
     *output = (char *)malloc(input_len + AES_BLOCK_SIZE);
     if (*output == NULL) return -1;
@@ -39,6 +42,12 @@ static int encrypt_message(const char *input, int input_len, char **output) {
 
     EVP_CIPHER_CTX_free(ctx);
 
+    fprintf(stderr, "Encrypted message: ");
+    for (int i = 0; i < ciphertext_len; i++) {
+        fprintf(stderr, "%02x", (unsigned char)(*output)[i]);
+    }
+    fprintf(stderr, "\n");
+
     return ciphertext_len;
 }
 
@@ -46,6 +55,12 @@ static int decrypt_message(const char *input, int input_len, char **output) {
     EVP_CIPHER_CTX *ctx;
     int len;
     int plaintext_len;
+
+    fprintf(stderr, "Decrypting message: ");
+    for (int i = 0; i < input_len; i++) {
+        fprintf(stderr, "%02x", (unsigned char)input[i]);
+    }
+    fprintf(stderr, "\n");
 
     *output = (char *)malloc(input_len);
     if (*output == NULL) return -1;
@@ -70,6 +85,10 @@ static int decrypt_message(const char *input, int input_len, char **output) {
     plaintext_len += len;
 
     EVP_CIPHER_CTX_free(ctx);
+
+    (*output)[plaintext_len] = '\0';
+
+    fprintf(stderr, "Decrypted message: %s\n", *output);
 
     return plaintext_len;
 }
