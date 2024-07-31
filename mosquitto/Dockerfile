@@ -12,8 +12,8 @@ RUN apk update && \
     shadow
 
 # Create necessary directories and set permissions
-RUN mkdir -p /encrypted /var/lib/mosquitto /config && \
-    chown -R mosquitto:mosquitto /var/lib/mosquitto && \
+RUN mkdir -p /encrypted /var/lib/mosquitto && \
+    chown -R mosquitto:mosquitto /var/lib/mosquitto /encrypted  && \
     chmod -R 700 /var/lib/mosquitto && \
     chmod -R 700 /encrypted && \
     chmod -R 700 /config
