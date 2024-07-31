@@ -10,10 +10,13 @@
 const unsigned char key[AES_KEY_SIZE / 8] = "01234567890123456789012345678901";
 const unsigned char iv[AES_BLOCK_SIZE] = "0123456789012345";
 
-static int encrypt_message(const char *input, char *output, size_t output_len) {
+static int encrypt_message(const char *input, int input_len, char **output) {
     EVP_CIPHER_CTX *ctx;
     int len;
     int ciphertext_len;
+
+    *output = (char *)malloc(input_len + AES_BLOCK_SIZE);
+    if (*output == NULL) return -1;
 
     if (!(ctx = EVP_CIPHER_CTX_new())) return -1;
 
@@ -22,13 +25,13 @@ static int encrypt_message(const char *input, char *output, size_t output_len) {
         return -1;
     }
 
-    if (1 != EVP_EncryptUpdate(ctx, (unsigned char *)output, &len, (unsigned char *)input, strlen(input))) {
+    if (1 != EVP_EncryptUpdate(ctx, (unsigned char *)*output, &len, (unsigned char *)input, input_len)) {
         EVP_CIPHER_CTX_free(ctx);
         return -1;
     }
     ciphertext_len = len;
 
-    if (1 != EVP_EncryptFinal_ex(ctx, (unsigned char *)output + len, &len)) {
+    if (1 != EVP_EncryptFinal_ex(ctx, (unsigned char *)*output + len, &len)) {
         EVP_CIPHER_CTX_free(ctx);
         return -1;
     }
@@ -39,10 +42,13 @@ static int encrypt_message(const char *input, char *output, size_t output_len) {
     return ciphertext_len;
 }
 
-static int decrypt_message(const char *input, char *output, size_t output_len) {
+static int decrypt_message(const char *input, int input_len, char **output) {
     EVP_CIPHER_CTX *ctx;
     int len;
     int plaintext_len;
+
+    *output = (char *)malloc(input_len);
+    if (*output == NULL) return -1;
 
     if (!(ctx = EVP_CIPHER_CTX_new())) return -1;
 
@@ -51,13 +57,13 @@ static int decrypt_message(const char *input, char *output, size_t output_len) {
         return -1;
     }
 
-    if (1 != EVP_DecryptUpdate(ctx, (unsigned char *)output, &len, (unsigned char *)input, strlen(input))) {
+    if (1 != EVP_DecryptUpdate(ctx, (unsigned char *)*output, &len, (unsigned char *)input, input_len)) {
         EVP_CIPHER_CTX_free(ctx);
         return -1;
     }
     plaintext_len = len;
 
-    if (1 != EVP_DecryptFinal_ex(ctx, (unsigned char *)output + len, &len)) {
+    if (1 != EVP_DecryptFinal_ex(ctx, (unsigned char *)*output + len, &len)) {
         EVP_CIPHER_CTX_free(ctx);
         return -1;
     }
@@ -101,34 +107,33 @@ int mosquitto_auth_acl_check(void *userdata, int access, struct mosquitto *clien
 }
 
 int mosquitto_message_publish(int event, void *userdata, struct mosquitto *mosq, const struct mosquitto_message *msg) {
-    char encrypted_msg[256];
-    int encrypted_len = encrypt_message(msg->payload, encrypted_msg, sizeof(encrypted_msg));
+    char *encrypted_msg;
+    int encrypted_len = encrypt_message(msg->payload, msg->payloadlen, &encrypted_msg);
     if (encrypted_len < 0) {
         return MOSQ_ERR_UNKNOWN;
     }
-    
-    // Publish the encrypted message
-    struct mosquitto_message encrypted_message = *msg;
-    encrypted_message.payload = encrypted_msg;
-    encrypted_message.payloadlen = encrypted_len;
 
-    return mosquitto_publish(mosq, NULL, encrypted_message.topic, encrypted_message.payloadlen,
-                             encrypted_message.payload, encrypted_message.qos, encrypted_message.retain);
+    // Publish the encrypted message
+    int result = mosquitto_publish(mosq, NULL, msg->topic, encrypted_len, encrypted_msg, msg->qos, msg->retain);
+
+    // Free the allocated memory
+    free(encrypted_msg);
+
+    return result;
 }
 
 int mosquitto_message_receive(int event, void *userdata, struct mosquitto *mosq, const struct mosquitto_message *msg) {
-    char decrypted_msg[256];
-    int decrypted_len = decrypt_message(msg->payload, decrypted_msg, sizeof(decrypted_msg));
+    char *decrypted_msg;
+    int decrypted_len = decrypt_message(msg->payload, msg->payloadlen, &decrypted_msg);
     if (decrypted_len < 0) {
         return MOSQ_ERR_UNKNOWN;
     }
 
-    // Create a new message with the decrypted payload
-    struct mosquitto_message decrypted_message = *msg;
-    decrypted_message.payload = decrypted_msg;
-    decrypted_message.payloadlen = decrypted_len;
+    // Here, instead of publishing the decrypted message, you would handle it as needed.
+    // For example, you might print it or pass it to another function.
 
-    // Re-publish the decrypted message
-    return mosquitto_publish(mosq, NULL, decrypted_message.topic, decrypted_message.payloadlen,
-                             decrypted_message.payload, decrypted_message.qos, decrypted_message.retain);
+    // Free the allocated memory
+    free(decrypted_msg);
+
+    return MOSQ_ERR_SUCCESS;
 }
