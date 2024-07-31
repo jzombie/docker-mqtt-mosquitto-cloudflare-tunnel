@@ -11,6 +11,11 @@
 const unsigned char key[AES_KEY_SIZE / 8] = "01234567890123456789012345678901";
 const unsigned char iv[AES_BLOCK_SIZE] = "0123456789012345";
 
+static int encrypt_message(const char *input, int input_len, char **output);
+static int decrypt_message(const char *input, int input_len, char **output);
+static int mosquitto_message_publish_callback(int event, void *userdata, void *message);
+static int mosquitto_message_receive_callback(int event, void *userdata, void *message);
+
 static int encrypt_message(const char *input, int input_len, char **output) {
     EVP_CIPHER_CTX *ctx;
     int len;
@@ -97,35 +102,51 @@ int mosquitto_plugin_version(int supported_version_count, const int *supported_v
     return MOSQ_PLUGIN_VERSION;
 }
 
+static mosquitto_plugin_id_t *mosquitto_id;
+
 int mosquitto_plugin_init(mosquitto_plugin_id_t *identifier, void **userdata, struct mosquitto_opt *options, int option_count) {
+    fprintf(stderr, "Plugin initialized\n");
+    mosquitto_id = identifier;
+    mosquitto_callback_register(mosquitto_id, MOSQ_EVT_MESSAGE, mosquitto_message_publish_callback, userdata, NULL);
+    mosquitto_callback_register(mosquitto_id, MOSQ_EVT_MESSAGE, mosquitto_message_receive_callback, userdata, NULL);
     return MOSQ_ERR_SUCCESS;
 }
 
 int mosquitto_plugin_cleanup(void *userdata, struct mosquitto_opt *options, int option_count) {
+    fprintf(stderr, "Plugin cleaned up\n");
     return MOSQ_ERR_SUCCESS;
 }
 
 int mosquitto_auth_plugin_init(void **userdata, struct mosquitto_opt *options, int option_count) {
+    fprintf(stderr, "Auth plugin initialized\n");
     return MOSQ_ERR_SUCCESS;
 }
 
 int mosquitto_auth_plugin_cleanup(void *userdata, struct mosquitto_opt *options, int option_count) {
+    fprintf(stderr, "Auth plugin cleaned up\n");
     return MOSQ_ERR_SUCCESS;
 }
 
 int mosquitto_auth_security_init(void *userdata, struct mosquitto_opt *options, int option_count, bool reload) {
+    fprintf(stderr, "Security initialized\n");
     return MOSQ_ERR_SUCCESS;
 }
 
 int mosquitto_auth_security_cleanup(void *userdata, struct mosquitto_opt *options, int option_count, bool reload) {
+    fprintf(stderr, "Security cleaned up\n");
     return MOSQ_ERR_SUCCESS;
 }
 
 int mosquitto_auth_acl_check(void *userdata, int access, struct mosquitto *client, const struct mosquitto_acl_msg *msg) {
+    fprintf(stderr, "ACL check\n");
     return MOSQ_ERR_SUCCESS;
 }
 
-int mosquitto_message_publish(int event, void *userdata, struct mosquitto *mosq, const struct mosquitto_message *msg) {
+// Define the callback functions with correct signatures
+mosquitto_message_publish_callbackstatic int (int event, void *userdata, void *message) {
+    struct mosquitto_message *msg = (struct mosquitto_message *)message;
+    fprintf(stderr, "Publishing message: %s\n", (char *)msg->payload);
+
     char *encrypted_msg;
     int encrypted_len = encrypt_message(msg->payload, msg->payloadlen, &encrypted_msg);
     if (encrypted_len < 0) {
@@ -133,7 +154,7 @@ int mosquitto_message_publish(int event, void *userdata, struct mosquitto *mosq,
     }
 
     // Publish the encrypted message
-    int result = mosquitto_publish(mosq, NULL, msg->topic, encrypted_len, encrypted_msg, msg->qos, msg->retain);
+    int result = mosquitto_publish((struct mosquitto *)userdata, NULL, msg->topic, encrypted_len, encrypted_msg, msg->qos, msg->retain);
 
     // Free the allocated memory
     free(encrypted_msg);
@@ -141,15 +162,19 @@ int mosquitto_message_publish(int event, void *userdata, struct mosquitto *mosq,
     return result;
 }
 
-int mosquitto_message_receive(int event, void *userdata, struct mosquitto *mosq, const struct mosquitto_message *msg) {
+static int mosquitto_message_receive_callback(int event, void *userdata, void *message) {
+    struct mosquitto_message *msg = (struct mosquitto_message *)message;
+    fprintf(stderr, "Receiving message: ");
+    for (int i = 0; i < msg->payloadlen; i++) {
+        fprintf(stderr, "%02x", (unsigned char)((char *)msg->payload)[i]);
+    }
+    fprintf(stderr, "\n");
+
     char *decrypted_msg;
     int decrypted_len = decrypt_message(msg->payload, msg->payloadlen, &decrypted_msg);
     if (decrypted_len < 0) {
         return MOSQ_ERR_UNKNOWN;
     }
-
-    // Here, instead of publishing the decrypted message, you would handle it as needed.
-    // For example, you might print it or pass it to another function.
 
     // Free the allocated memory
     free(decrypted_msg);
