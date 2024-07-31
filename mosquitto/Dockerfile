@@ -8,11 +8,6 @@ RUN apk update && \
     fuse \
     encfs \
     mosquitto \
-    mosquitto-clients \
-    mosquitto-dev \
-    openssl-dev \
-    gcc \
-    musl-dev \
     shadow
 
 # Create necessary directories and set permissions
