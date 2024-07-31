@@ -8,11 +8,6 @@ if [ -z "$ENCFS_PASSWORD" ]; then
   exit 1
 fi
 
-# mkdir -p /encrypted
-
-# # Set restrictive permissions
-# chmod 700 /encrypted
-
 # Initialize or mount the encrypted filesystem as the mosquitto user
 if [ ! -f /encrypted/.encfs6.xml ]; then
   echo "Initializing encrypted filesystem"
