@@ -8,6 +8,7 @@ services:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
       - ./mosquitto/aclfile:/mosquitto/config/aclfile
       - ./mosquitto/entrypoint.sh:/entrypoint.sh
+      - ./data/:/var/lib/mosquitto/
     entrypoint: /entrypoint.sh
     restart: unless-stopped
 
