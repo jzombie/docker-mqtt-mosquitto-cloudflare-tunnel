@@ -1,3 +1,5 @@
+![CI](https://github.com/jzombie/docker-mqtt-mosquitto-cloudflare-tunnel/actions/workflows/ci.yml/badge.svg)
+
 # Docker MQTT Mosquitto Cloudflare Tunnel
 
 This setup demonstrates how to configure and deploy an MQTT broker using Eclipse Mosquitto within a Docker container and securely expose it to the internet via a Cloudflare Tunnel. This setup is particularly useful for IoT applications, allowing secure and scalable message brokering over the MQTT protocol.
