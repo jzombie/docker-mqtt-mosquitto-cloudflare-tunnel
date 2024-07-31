@@ -1,21 +1,22 @@
-# Start with an Alpine base image that supports FUSE
+# Start with an Alpine base image
 FROM alpine:latest
 
-# Install necessary packages including FUSE, Mosquitto, and encfs
+# Install necessary packages including FUSE, Mosquitto, and gocryptfs
 RUN apk update && \
     apk add --no-cache \
     bash \
     fuse \
-    encfs \
+    gocryptfs \
     mosquitto \
     mosquitto-clients \
     shadow
 
 # Create necessary directories and set permissions
-RUN mkdir -p /encrypted /var/lib/mosquitto && \
+RUN mkdir -p /encrypted /var/lib/mosquitto /config && \
     chown -R mosquitto:mosquitto /var/lib/mosquitto && \
     chmod -R 700 /var/lib/mosquitto && \
-    chmod -R 700 /encrypted
+    chmod -R 700 /encrypted && \
+    chmod -R 700 /config
 
 # Ensure mosquitto user has a valid shell
 RUN usermod -s /bin/bash mosquitto
