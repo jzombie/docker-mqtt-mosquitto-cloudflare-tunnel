@@ -7,9 +7,18 @@ services:
     volumes:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
       - ./mosquitto/aclfile:/mosquitto/config/aclfile
-      - ./data/:/var/lib/mosquitto/
+      - ./data:/encrypted
     restart: unless-stopped
     entrypoint: /entrypoint.sh
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+    devices:
+      - /dev/fuse
+    environment:
+      # TODO: Adjust as neeed (but not here!)
+      ENCFS_PASSWORD: your_secure_password_here
 
   cloudflared:
     image: cloudflare/cloudflared:latest
