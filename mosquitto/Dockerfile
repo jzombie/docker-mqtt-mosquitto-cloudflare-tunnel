@@ -12,19 +12,21 @@ RUN apk update && \
     mosquitto-dev \
     openssl-dev \
     gcc \
-    musl-dev
+    musl-dev \
+    shadow
 
-# Create necessary directories
-RUN mkdir -p /encrypted /var/lib/mosquitto
+# Create necessary directories and set permissions
+RUN mkdir -p /encrypted /var/lib/mosquitto && \
+    chown -R mosquitto:mosquitto /var/lib/mosquitto && \
+    chmod -R 755 /var/lib/mosquitto
+
+# Ensure mosquitto user has a valid shell
+RUN usermod -s /bin/bash mosquitto
 
 # Copy the Mosquitto configuration files and entrypoint script
 COPY mosquitto.conf /mosquitto/config/mosquitto.conf
 COPY aclfile /mosquitto/config/aclfile
 COPY entrypoint.sh /entrypoint.sh
-
-# Set correct permissions and ownership
-RUN chown -R mosquitto:mosquitto /var/lib/mosquitto && \
-    chmod -R 700 /var/lib/mosquitto
 
 # Ensure entrypoint script is executable
 RUN chmod +x /entrypoint.sh
