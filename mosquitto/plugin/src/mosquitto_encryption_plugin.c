@@ -21,7 +21,7 @@ static int encrypt_message(const char *input, int input_len, char **output) {
     int len;
     int ciphertext_len;
 
-    fprintf(stderr, "Encrypting message: %s\n", input);
+    fprintf(stderr, "Encrypting message: %.*s\n", input_len, input);
 
     *output = (char *)malloc(input_len + AES_BLOCK_SIZE);
     if (*output == NULL) {
@@ -169,11 +169,11 @@ int mosquitto_auth_acl_check(void *userdata, int access, struct mosquitto *clien
 static int mosquitto_message_publish_callback(int event, void *userdata, void *message) {
     struct mosquitto_message *msg = (struct mosquitto_message *)message;
     fprintf(stderr, "mosquitto_message_publish_callback triggered\n");
-    if (!msg || !msg->payload) {
+    if (!msg || !msg->payload || msg->payloadlen <= 0) {
         fprintf(stderr, "Invalid message or payload\n");
         return MOSQ_ERR_UNKNOWN;
     }
-    fprintf(stderr, "Publishing message: %s\n", (char *)msg->payload);
+    fprintf(stderr, "Publishing message: %.*s\n", msg->payloadlen, (char *)msg->payload);
 
     char *encrypted_msg = NULL;
     int encrypted_len = encrypt_message(msg->payload, msg->payloadlen, &encrypted_msg);
@@ -205,7 +205,7 @@ static int mosquitto_message_publish_callback(int event, void *userdata, void *m
 static int mosquitto_message_receive_callback(int event, void *userdata, void *message) {
     struct mosquitto_message *msg = (struct mosquitto_message *)message;
     fprintf(stderr, "mosquitto_message_receive_callback triggered\n");
-    if (!msg || !msg->payload) {
+    if (!msg || !msg->payload || msg->payloadlen <= 0) {
         fprintf(stderr, "Invalid message or payload\n");
         return MOSQ_ERR_UNKNOWN;
     }
