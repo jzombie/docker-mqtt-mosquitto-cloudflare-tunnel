@@ -8,6 +8,7 @@ RUN apk update && \
     fuse \
     encfs \
     mosquitto \
+    mosquitto-clients \
     shadow
 
 # Create necessary directories and set permissions
