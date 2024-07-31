@@ -64,6 +64,7 @@ static int encrypt_message(const char *input, int input_len, char **output) {
     return ciphertext_len;
 }
 
+
 static int decrypt_message(const char *input, int input_len, char **output) {
     EVP_CIPHER_CTX *ctx;
     int len;
@@ -113,6 +114,7 @@ static int decrypt_message(const char *input, int input_len, char **output) {
     fprintf(stderr, "Decrypted message: %s\n", *output);
     return plaintext_len;
 }
+
 
 int mosquitto_plugin_version(int supported_version_count, const int *supported_versions) {
     return MOSQ_PLUGIN_VERSION;
@@ -169,10 +171,22 @@ int mosquitto_auth_acl_check(void *userdata, int access, struct mosquitto *clien
 static int mosquitto_message_publish_callback(int event, void *userdata, void *message) {
     struct mosquitto_message *msg = (struct mosquitto_message *)message;
     fprintf(stderr, "mosquitto_message_publish_callback triggered\n");
-    if (!msg || !msg->payload || msg->payloadlen <= 0) {
-        fprintf(stderr, "Invalid message or payload\n");
+
+    if (!msg) {
+        fprintf(stderr, "Invalid message pointer\n");
         return MOSQ_ERR_UNKNOWN;
     }
+
+    if (!msg->payload) {
+        fprintf(stderr, "Message payload is NULL\n");
+        return MOSQ_ERR_UNKNOWN;
+    }
+
+    if (msg->payloadlen <= 0) {
+        fprintf(stderr, "Message payload length is invalid: %d\n", msg->payloadlen);
+        return MOSQ_ERR_UNKNOWN;
+    }
+
     fprintf(stderr, "Publishing message: %.*s\n", msg->payloadlen, (char *)msg->payload);
 
     char *encrypted_msg = NULL;
@@ -202,13 +216,26 @@ static int mosquitto_message_publish_callback(int event, void *userdata, void *m
     return result;
 }
 
+
 static int mosquitto_message_receive_callback(int event, void *userdata, void *message) {
     struct mosquitto_message *msg = (struct mosquitto_message *)message;
     fprintf(stderr, "mosquitto_message_receive_callback triggered\n");
-    if (!msg || !msg->payload || msg->payloadlen <= 0) {
-        fprintf(stderr, "Invalid message or payload\n");
+
+    if (!msg) {
+        fprintf(stderr, "Invalid message pointer\n");
         return MOSQ_ERR_UNKNOWN;
     }
+
+    if (!msg->payload) {
+        fprintf(stderr, "Message payload is NULL\n");
+        return MOSQ_ERR_UNKNOWN;
+    }
+
+    if (msg->payloadlen <= 0) {
+        fprintf(stderr, "Message payload length is invalid: %d\n", msg->payloadlen);
+        return MOSQ_ERR_UNKNOWN;
+    }
+
     fprintf(stderr, "Receiving message: ");
     for (int i = 0; i < msg->payloadlen; i++) {
         fprintf(stderr, "%02x", (unsigned char)((char *)msg->payload)[i]);
