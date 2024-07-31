@@ -24,6 +24,7 @@ jobs:
         run: |
           for i in {1..20}; do
             STATUS=$(docker inspect --format='{{.State.Health.Status}}' mosquitto)
+            echo "Current Mosquitto health status: $STATUS"
             if [ "$STATUS" = "healthy" ]; then
               echo "Mosquitto is healthy"
               if docker exec mosquitto mosquitto_pub -t test/topic -m "Test message" -r; then
