@@ -4,6 +4,11 @@ services:
   mosquitto:
     build: ./mosquitto
     container_name: mosquitto
+    # Note: These are intentionally not exposed directly to the host but could
+    # be useful for debugging
+    # ports:
+    #   - 1883:1883
+    #   - 9001:9001
     volumes:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
       - ./mosquitto/aclfile:/mosquitto/config/aclfile
