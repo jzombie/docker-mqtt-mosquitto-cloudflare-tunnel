@@ -38,20 +38,14 @@ jobs:
       - name: Start Mosquitto service using Docker Compose
         run: docker-compose up -d mosquitto_with_healthcheck
 
-      - name: Wait for Mosquitto to be healthy and publish message
+      - name: Wait for Mosquitto to be healthy
         run: |
           for i in {1..20}; do
             STATUS=$(docker inspect --format='{{.State.Health.Status}}' mosquitto_with_healthcheck)
             echo "Current Mosquitto health status: $STATUS"
             if [ "$STATUS" = "healthy" ]; then
               echo "Mosquitto is healthy"
-              if docker exec mosquitto_with_healthcheck mosquitto_pub -u my_username -t my_username/topic -m "Test message" -r; then
-                echo "Message published successfully"
-                exit 0
-              else
-                echo "Failed to publish message, retrying..."
-                sleep 10
-              fi
+              exit 0
             else
               echo "Waiting for Mosquitto to be healthy..."
               sleep 10
@@ -61,6 +55,9 @@ jobs:
           echo "Mosquitto did not become healthy in time"
           docker logs mosquitto_with_healthcheck
           exit 1
+
+      - name: Publish test message to be retained
+        run: docker exec mosquitto_with_healthcheck mosquitto_pub -u my_username -t my_username/topic -m "Test message" -r
 
       - name: Stop Mosquitto service and capture logs
         run: |
