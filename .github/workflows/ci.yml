@@ -80,7 +80,7 @@ jobs:
 
       # TODO: Remove
       - name: TEMP (ls)
-        run: ls data
+        run: ls ./data
 
       - name: Check encrypted data in project directory
         run: |
