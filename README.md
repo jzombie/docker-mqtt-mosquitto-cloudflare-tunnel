@@ -2,10 +2,10 @@
 
 # Docker MQTT Mosquitto Cloudflare Tunnel
 
-**Note:** For enhanced security, a more protected branch is available, which:
+**Note:** For examples of customization, another branch is available, which:
 
-- Restricts wildcard searches across users
-- Encrypts retained messages using gocrypt
+- Restricts wildcard searches across users (in a naive fashion where each topic is a user)
+- Encrypts retained messages using `gocrypt`
 - Auto-saves retained messages after every message
 
 You can find it here: [protected-no-wildcard branch](https://github.com/jzombie/docker-mqtt-mosquitto-cloudflare-tunnel/tree/protected-no-wildcard)
