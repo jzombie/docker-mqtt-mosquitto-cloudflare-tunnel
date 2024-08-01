@@ -22,7 +22,7 @@ services:
       timeout: 5s
       retries: 10
     environment:
-      GOCRYPT_PASSWORD
+      - GOCRYPT_PASSWORD
 
   cloudflared:
     image: cloudflare/cloudflared:latest
