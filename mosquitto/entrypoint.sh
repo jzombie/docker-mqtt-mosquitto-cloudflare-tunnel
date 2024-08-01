@@ -8,12 +8,6 @@ if [ -z "$GOCRYPT_PASSWORD" ]; then
   exit 1
 fi
 
-# Create /var/lib/mosquitto directory if not exists
-mkdir -p /var/lib/mosquitto
-
-# Adjust permissions for the mosquitto user
-chown mosquitto:mosquitto /var/lib/mosquitto /encrypted
-
 # Initialize or mount the encrypted filesystem as the mosquitto user
 su mosquitto -c "
 if [ ! -f /encrypted/gocryptfs.conf ]; then
