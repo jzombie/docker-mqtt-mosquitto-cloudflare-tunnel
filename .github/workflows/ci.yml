@@ -109,6 +109,7 @@ jobs:
           done
 
       - name: Verify retained message for my_username
+        # Note: Based on the non-standard ACL implementation that expects the current username to be the first topic level
         run: |
           echo "Proceeding to verify retained message for my_username..."
           # Subscribe to the topic and verify the retained message using a consistent username
@@ -124,7 +125,7 @@ jobs:
           fi
 
       - name: Verify no access to other user's messages
-        # Note: EXPECTs a timeout here
+        # Note: EXPECTs a timeout here, based on the non-standard ACL implementation that expects the current username to be the first topic level
         run: |
           echo "Proceeding to verify no access to other user's messages..."
           RETAINED_MSG=$(timeout 10s docker exec mosquitto_with_healthcheck mosquitto_sub -u username -t other_username/topic -C 1 || true)
