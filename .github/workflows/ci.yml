@@ -45,7 +45,7 @@ jobs:
             echo "Current Mosquitto health status: $STATUS"
             if [ "$STATUS" = "healthy" ]; then
               echo "Mosquitto is healthy"
-              if docker exec mosquitto_with_healthcheck mosquitto_pub -u my_username -t test/topic -m "Test message" -r; then
+              if docker exec mosquitto_with_healthcheck mosquitto_pub -u my_username -t my_username/topic -m "Test message" -r; then
                 echo "Message published successfully"
                 exit 0
               else
@@ -110,7 +110,7 @@ jobs:
           echo "Proceeding to verify retained message..."
 
           # Subscribe to the topic and verify the retained message using a consistent username
-          RETAINED_MSG=$(docker exec mosquitto_with_healthcheck mosquitto_sub -u my_username -t test/topic -C 1)
+          RETAINED_MSG=$(docker exec mosquitto_with_healthcheck mosquitto_sub -u my_username -t my_username/topic -C 1)
           echo "Retained message received: $RETAINED_MSG"
           if [ "$RETAINED_MSG" = "Test message" ]; then
             echo "Retained message verified successfully"
