@@ -78,6 +78,10 @@ jobs:
             fi
           '
 
+      # TODO: Remove
+      - name: TEMP (ls)
+        run: ls data
+
       - name: Check encrypted data in project directory
         run: |
           if [ -f ./data/gocryptfs.conf ] && [ -f ./data/gocryptfs.diriv ]; then
@@ -87,6 +91,7 @@ jobs:
             exit 1;
           fi
 
+      # TODO: Uncomment
       # Add a test to emulate the previous workflow
       # - name: Restart Mosquitto service and verify retained message
       #   run: |
