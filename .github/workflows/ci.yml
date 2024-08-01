@@ -124,21 +124,15 @@ jobs:
           fi
 
       - name: Verify no access to other user's messages
+        # Note: EXPECTs a timeout here
         run: |
           echo "Proceeding to verify no access to other user's messages..."
           RETAINED_MSG=$(timeout 10s docker exec mosquitto_with_healthcheck mosquitto_sub -u username -t other_username/topic -C 1 || true)
           if [ -z "$RETAINED_MSG" ]; then
-            echo "Failed to verify retained message or command timed out"
+            echo "No access to other user's messages verified successfully"
+            exit 0
+          else
+            echo "Failed: Should not have access to other user's messages"
             docker logs mosquitto_with_healthcheck
             exit 1
-          else
-            echo "Retained message received: $RETAINED_MSG"
-            if [ "$RETAINED_MSG" = "Test message" ]; then
-              echo "Retained message verified successfully"
-              exit 0
-            else
-              echo "Failed to verify retained message"
-              docker logs mosquitto_with_healthcheck
-              exit 1
-            fi
           fi
