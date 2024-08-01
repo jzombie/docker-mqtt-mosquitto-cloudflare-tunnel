@@ -4,7 +4,7 @@
 
 **Note:** For examples of customization, another branch is available, which:
 
-- Restricts wildcard searches across users (in a naive fashion where each topic is a user)
+- Restricts wildcard searches across users (in a naive fashion where the first level of a topic is the username)
 - Encrypts retained messages using `gocrypt`
 - Auto-saves retained messages after every message
 
