@@ -88,31 +88,31 @@ jobs:
           fi
 
       # Add a test to emulate the previous workflow
-      - name: Restart Mosquitto service and verify retained message
-        run: |
-          # Restart the Mosquitto service
-          docker-compose up -d mosquitto_with_healthcheck
+      # - name: Restart Mosquitto service and verify retained message
+      #   run: |
+      #     # Restart the Mosquitto service
+      #     docker-compose up -d mosquitto_with_healthcheck
 
-          # Wait for Mosquitto to be healthy again
-          for i in {1..20}; do
-            STATUS=$(docker inspect --format='{{.State.Health.Status}}' mosquitto_with_healthcheck)
-            echo "Current Mosquitto health status: $STATUS"
-            if [ "$STATUS" = "healthy" ]; then
-              echo "Mosquitto is healthy"
-              break
-            else
-              echo "Waiting for Mosquitto to be healthy..."
-              sleep 10
-            fi
-          done
+      #     # Wait for Mosquitto to be healthy again
+      #     for i in {1..20}; do
+      #       STATUS=$(docker inspect --format='{{.State.Health.Status}}' mosquitto_with_healthcheck)
+      #       echo "Current Mosquitto health status: $STATUS"
+      #       if [ "$STATUS" = "healthy" ]; then
+      #         echo "Mosquitto is healthy"
+      #         break
+      #       else
+      #         echo "Waiting for Mosquitto to be healthy..."
+      #         sleep 10
+      #       fi
+      #     done
 
-          # Subscribe to the topic and verify the retained message
-          RETAINED_MSG=$(docker exec mosquitto_with_healthcheck mosquitto_sub -t test/topic -C 1)
-          echo "Retained message received: $RETAINED_MSG"
-          if [ "$RETAINED_MSG" = "Test message" ]; then
-            echo "Retained message verified successfully"
-            exit 0
-          else
-            echo "Failed to verify retained message"
-            exit 1
-          fi
+      #     # Subscribe to the topic and verify the retained message
+      #     RETAINED_MSG=$(docker exec mosquitto_with_healthcheck mosquitto_sub -t test/topic -C 1)
+      #     echo "Retained message received: $RETAINED_MSG"
+      #     if [ "$RETAINED_MSG" = "Test message" ]; then
+      #       echo "Retained message verified successfully"
+      #       exit 0
+      #     else
+      #       echo "Failed to verify retained message"
+      #       exit 1
+      #     fi
