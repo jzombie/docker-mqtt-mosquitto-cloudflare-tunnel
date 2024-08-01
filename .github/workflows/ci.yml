@@ -108,8 +108,9 @@ jobs:
             fi
           done
 
-          echo "Proceeding to verify retained message..."
-
+      - name: Verify retained message for my_username
+        run: |
+          echo "Proceeding to verify retained message for my_username..."
           # Subscribe to the topic and verify the retained message using a consistent username
           RETAINED_MSG=$(docker exec mosquitto_with_healthcheck mosquitto_sub -u my_username -t my_username/topic -C 1)
           echo "Retained message received: $RETAINED_MSG"
@@ -122,7 +123,9 @@ jobs:
             exit 1
           fi
 
-          # Verify that it cannot access another user's messages
+      - name: Verify no access to other user's messages
+        run: |
+          echo "Proceeding to verify no access to other user's messages..."
           RETAINED_MSG=$(timeout 10s docker exec mosquitto_with_healthcheck mosquitto_sub -u username -t other_username/topic -C 1 || true)
           if [ -z "$RETAINED_MSG" ]; then
             echo "Failed to verify retained message or command timed out"
