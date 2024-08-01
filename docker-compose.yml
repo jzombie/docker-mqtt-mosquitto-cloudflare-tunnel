@@ -2,11 +2,32 @@ version: '3.8'
 
 services:
   mosquitto:
-    image: eclipse-mosquitto:latest
+    build: ./mosquitto
     container_name: mosquitto
+    # Note: These are intentionally not exposed directly to the host but could
+    # be useful for debugging
+    # ports:
+    #   - 1883:1883
+    #   - 9001:9001
     volumes:
-      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./mosquitto/aclfile:/mosquitto/config/aclfile
+      - ./data:/encrypted
     restart: unless-stopped
+    entrypoint: /entrypoint.sh
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+    devices:
+      - /dev/fuse
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-t", "health", "-m", "health check"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    environment:
+      - GOCRYPT_PASSWORD
 
   cloudflared:
     image: cloudflare/cloudflared:latest
