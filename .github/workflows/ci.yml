@@ -38,20 +38,14 @@ jobs:
       - name: Start Mosquitto service using Docker Compose
         run: docker-compose up -d mosquitto_with_healthcheck
 
-      - name: Wait for Mosquitto to be healthy and publish message
+      - name: Wait for Mosquitto to be healthy
         run: |
           for i in {1..20}; do
             STATUS=$(docker inspect --format='{{.State.Health.Status}}' mosquitto_with_healthcheck)
             echo "Current Mosquitto health status: $STATUS"
             if [ "$STATUS" = "healthy" ]; then
               echo "Mosquitto is healthy"
-              if docker exec mosquitto_with_healthcheck mosquitto_pub -t test/topic -m "Test message" -r; then
-                echo "Message published successfully"
-                exit 0
-              else
-                echo "Failed to publish message, retrying..."
-                sleep 10
-              fi
+              exit 0
             else
               echo "Waiting for Mosquitto to be healthy..."
               sleep 10
@@ -61,6 +55,13 @@ jobs:
           echo "Mosquitto did not become healthy in time"
           docker logs mosquitto_with_healthcheck
           exit 1
+
+      - name: Publish test message to be retained (as current user)
+        # Note: This is a non-standard implementation based on the ACL rule that the current username must be the first level in a topic
+        run: docker exec mosquitto_with_healthcheck mosquitto_pub -u my_username -t my_username/topic -m "Test message" -r
+
+      - name: Publish test message to be retained (as another user)
+        run: docker exec mosquitto_with_healthcheck mosquitto_pub -u my_username -t other_username/topic -m "Another test message" -r
 
       - name: Stop Mosquitto service and capture logs
         run: |
@@ -78,11 +79,61 @@ jobs:
             fi
           '
 
-      - name: Check encrypted data in project directory
+      - name: Check encrypted data in project directory as root
         run: |
+          sudo -s -- <<EOF
           if [ -f ./data/gocryptfs.conf ] && [ -f ./data/gocryptfs.diriv ]; then
             echo "Encrypted volume configuration files found in project directory";
           else
             echo "Encrypted volume configuration files not found in project directory";
             exit 1;
+          fi
+          EOF
+
+      - name: Restart Mosquitto service and verify retained message
+        run: |
+          # Restart the Mosquitto service
+          docker-compose up -d mosquitto_with_healthcheck
+
+          # Wait for Mosquitto to be healthy again
+          for i in {1..20}; do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' mosquitto_with_healthcheck)
+            echo "Current Mosquitto health status: $STATUS"
+            if [ "$STATUS" = "healthy" ]; then
+              echo "Mosquitto is healthy"
+              break
+            else
+              echo "Waiting for Mosquitto to be healthy..."
+              sleep 10
+            fi
+          done
+
+      - name: Verify retained message for my_username
+        # Note: Based on the non-standard ACL implementation that expects the current username to be the first topic level
+        run: |
+          echo "Proceeding to verify retained message for my_username..."
+          # Subscribe to the topic and verify the retained message using a consistent username
+          RETAINED_MSG=$(docker exec mosquitto_with_healthcheck mosquitto_sub -u my_username -t my_username/topic -C 1)
+          echo "Retained message received: $RETAINED_MSG"
+          if [ "$RETAINED_MSG" = "Test message" ]; then
+            echo "Retained message verified successfully"
+            exit 0
+          else
+            echo "Failed to verify retained message"
+            docker logs mosquitto_with_healthcheck
+            exit 1
+          fi
+
+      - name: Verify no access to other user's messages
+        # Note: EXPECTs a timeout here, based on the non-standard ACL implementation that expects the current username to be the first topic level
+        run: |
+          echo "Proceeding to verify no access to other user's messages..."
+          RETAINED_MSG=$(timeout 10s docker exec mosquitto_with_healthcheck mosquitto_sub -u username -t other_username/topic -C 1 || true)
+          if [ -z "$RETAINED_MSG" ]; then
+            echo "No access to other user's messages verified successfully"
+            exit 0
+          else
+            echo "Failed: Should not have access to other user's messages"
+            docker logs mosquitto_with_healthcheck
+            exit 1
           fi
