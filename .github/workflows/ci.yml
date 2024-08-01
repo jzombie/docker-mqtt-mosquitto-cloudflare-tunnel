@@ -17,13 +17,13 @@ jobs:
     # ensures that the initialization and mounting process will be performed
     # correctly during the container setup.
     - name: Ensure encrypted configuration files are not present in project directory
-        run: |
-          if [ -f ./data/gocryptfs.conf ] || [ -f ./data/gocryptfs.diriv ]; then
-            echo "Encrypted volume configuration files should not be present in project directory"
-            exit 1
-          else
-            echo "No encrypted volume configuration files found in project directory"
-          fi
+      run: |
+        if [ -f ./data/gocryptfs.conf ] || [ -f ./data/gocryptfs.diriv ]; then
+          echo "Encrypted volume configuration files should not be present in project directory"
+          exit 1
+        else
+          echo "No encrypted volume configuration files found in project directory"
+        fi
 
       - name: Set up Docker and Docker Compose
         run: |
