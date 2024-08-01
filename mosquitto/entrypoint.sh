@@ -64,5 +64,8 @@ fi
 echo "Contents of /var/lib/mosquitto after checking for persistence file:"
 ls -l /var/lib/mosquitto
 
+# Set correct permissions for aclfile
+chmod 0700 /mosquitto/config/aclfile
+
 # Run Mosquitto as the mosquitto user
 exec su mosquitto -c "mosquitto -c /mosquitto/config/mosquitto.conf"
