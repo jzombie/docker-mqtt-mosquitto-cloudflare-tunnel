@@ -22,7 +22,7 @@ services:
       timeout: 5s
       retries: 10
     environment:
-      # TODO: Adjust as neeed (but not here!)
+      # TODO: Adjust as needed (but not here!)
       GOCRYPT_PASSWORD: your_secure_password_here
     
 
