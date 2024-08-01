@@ -36,16 +36,16 @@ jobs:
           sudo apt-get install -y docker-compose
 
       - name: Start Mosquitto service using Docker Compose
-        run: docker-compose up -d mosquitto
+        run: docker-compose up -d mosquitto_with_healthcheck
 
       - name: Wait for Mosquitto to be healthy and publish message
         run: |
           for i in {1..20}; do
-            STATUS=$(docker inspect --format='{{.State.Health.Status}}' mosquitto)
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' mosquitto_with_healthcheck)
             echo "Current Mosquitto health status: $STATUS"
             if [ "$STATUS" = "healthy" ]; then
               echo "Mosquitto is healthy"
-              if docker exec mosquitto mosquitto_pub -t test/topic -m "Test message" -r; then
+              if docker exec mosquitto_with_healthcheck mosquitto_pub -t test/topic -m "Test message" -r; then
                 echo "Message published successfully"
                 exit 0
               else
@@ -59,12 +59,12 @@ jobs:
           done
 
           echo "Mosquitto did not become healthy in time"
-          docker logs mosquitto
+          docker logs mosquitto_with_healthcheck
           exit 1
 
       - name: Stop Mosquitto service and capture logs
         run: |
-          docker-compose logs mosquitto
+          docker-compose logs mosquitto_with_healthcheck
           docker-compose down
 
       - name: Check encrypted data in container

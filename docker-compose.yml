@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mosquitto:
     build: ./mosquitto
@@ -21,13 +19,21 @@ services:
       - apparmor:unconfined
     devices:
       - /dev/fuse
+    environment:
+      - GOCRYPT_PASSWORD
+
+  mosquitto_with_healthcheck:
+    extends:
+      service: mosquitto
+    container_name: mosquitto_with_healthcheck
     healthcheck:
       test: ["CMD", "mosquitto_pub", "-t", "health", "-m", "health check"]
       interval: 10s
       timeout: 5s
       retries: 10
-    environment:
-      - GOCRYPT_PASSWORD
+    profiles: 
+      # Don't automatically run
+      - healthcheck
 
   cloudflared:
     image: cloudflare/cloudflared:latest
