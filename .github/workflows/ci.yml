@@ -12,6 +12,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      # Generate a random password for GOCRYPT_PASSWORD and store it in an environment variable
+      - name: Generate random password
+        id: generate_password
+        run: echo "GOCRYPT_PASSWORD=$(openssl rand -base64 32)" >> $GITHUB_ENV
+
       # Ensure that the encrypted volume configuration files are not present
       # in the project directory before starting the containers. This check
       # ensures that the initialization and mounting process will be performed
