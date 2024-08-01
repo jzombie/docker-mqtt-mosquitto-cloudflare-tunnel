@@ -8,7 +8,7 @@
 - Encrypts retained messages using [gocryptfs](https://nuetzlich.net/gocryptfs/)
 - Auto-saves retained messages after every message
 
-You can find it here: [protected-no-wildcard branch](https://github.com/jzombie/docker-mqtt-mosquitto-cloudflare-tunnel/tree/protected-no-wildcard)
+You can find it here: [protected-no-wildcard branch](https://github.com/jzombie/docker-mqtt-mosquitto-cloudflare-tunnel/tree/protected-no-wildcard) or view the [diff](https://github.com/jzombie/docker-mqtt-mosquitto-cloudflare-tunnel/compare/main...protected-no-wildcard) instead.
 
 ---
 
