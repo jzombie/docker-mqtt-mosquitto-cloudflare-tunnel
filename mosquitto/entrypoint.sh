@@ -16,9 +16,9 @@ chown mosquitto:mosquitto /encrypted /var/lib/mosquitto
 chmod 700 /encrypted /var/lib/mosquitto
 
 # Debug: Check ownership and permissions before mounting
-echo "Ownership and permissions before mounting:"
-ls -ld /encrypted
-ls -ld /var/lib/mosquitto
+# echo "Ownership and permissions before mounting:"
+# ls -ld /encrypted
+# ls -ld /var/lib/mosquitto
 
 # Initialize the encrypted filesystem if it hasn't been initialized
 if [ ! -f /encrypted/gocryptfs.conf ]; then
@@ -44,9 +44,9 @@ chown -R mosquitto:mosquitto /var/lib/mosquitto
 chmod -R 700 /var/lib/mosquitto
 
 # Debug: Check ownership and permissions after mounting
-echo "Ownership and permissions after mounting:"
-ls -ld /var/lib/mosquitto
-ls -ld /encrypted
+# echo "Ownership and permissions after mounting:"
+# ls -ld /var/lib/mosquitto
+# ls -ld /encrypted
 
 # Debug: List contents of /var/lib/mosquitto to check if persistence file is present
 echo "Contents of /var/lib/mosquitto:"
