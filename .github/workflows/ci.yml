@@ -45,7 +45,7 @@ jobs:
             echo "Current Mosquitto health status: $STATUS"
             if [ "$STATUS" = "healthy" ]; then
               echo "Mosquitto is healthy"
-              if docker exec mosquitto_with_healthcheck mosquitto_pub -t test/topic -m "Test message" -r; then
+              if docker exec mosquitto_with_healthcheck mosquitto_pub -u my_username -t test/topic -m "Test message" -r; then
                 echo "Message published successfully"
                 exit 0
               else
@@ -78,16 +78,15 @@ jobs:
             fi
           '
 
-      # TODO: Uncomment
-      # - name: Check encrypted data in project directory
-      #   run: |
-      #     sudo chmod -R 755 ./data
-      #     if [ -f ./data/gocryptfs.conf ] && [ -f ./data/gocryptfs.diriv ]; then
-      #       echo "Encrypted volume configuration files found in project directory";
-      #     else
-      #       echo "Encrypted volume configuration files not found in project directory";
-      #       exit 1;
-      #     fi
+      - name: Check encrypted data in project directory
+        run: |
+          sudo chmod -R 755 ./data
+          if [ -f ./data/gocryptfs.conf ] && [ -f ./data/gocryptfs.diriv ]; then
+            echo "Encrypted volume configuration files found in project directory";
+          else
+            echo "Encrypted volume configuration files not found in project directory";
+            exit 1;
+          fi
 
       - name: Restart Mosquitto service and verify retained message
         run: |
@@ -107,15 +106,16 @@ jobs:
             fi
           done
 
-          echo "Proceeding to verify retained image..."
+          echo "Proceeding to verify retained message..."
 
-          # Subscribe to the topic and verify the retained message
-          RETAINED_MSG=$(timeout 10s docker exec mosquitto_with_healthcheck mosquitto_sub -t test/topic -C 1 || true)
+          # Subscribe to the topic and verify the retained message using a consistent username
+          RETAINED_MSG=$(docker exec mosquitto_with_healthcheck mosquitto_sub -u my_username -t test/topic -C 1)
           echo "Retained message received: $RETAINED_MSG"
           if [ "$RETAINED_MSG" = "Test message" ]; then
             echo "Retained message verified successfully"
             exit 0
           else
             echo "Failed to verify retained message"
+            docker logs mosquitto_with_healthcheck
             exit 1
           fi
