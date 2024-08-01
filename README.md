@@ -4,8 +4,8 @@
 
 **Note:** This differs from the [main branch](https://github.com/jzombie/docker-mqtt-mosquitto-cloudflare-tunnel), with the following:
 
-- Restricts wildcard searches across users
-- Encrypts retained messages using gocrypt
+- Restricts wildcard searches across users (in a naive fashion where each topic is a user)
+- Encrypts retained messages using `gocrypt`
 - Auto-saves retained messages after every message
 
 ---
