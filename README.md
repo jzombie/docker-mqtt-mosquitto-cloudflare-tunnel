@@ -5,7 +5,7 @@
 **Note:** For examples of customization, another branch is available, which:
 
 - Restricts wildcard searches across users (in a naive fashion where the first level of a topic is the username, with protections provided by an [ACL file](https://github.com/jzombie/docker-mqtt-mosquitto-cloudflare-tunnel/blob/protected-no-wildcard/mosquitto/aclfile))
-- Encrypts retained messages using `gocrypt`
+- Encrypts retained messages using [gocryptfs](https://nuetzlich.net/gocryptfs/)
 - Auto-saves retained messages after every message
 
 You can find it here: [protected-no-wildcard branch](https://github.com/jzombie/docker-mqtt-mosquitto-cloudflare-tunnel/tree/protected-no-wildcard)
