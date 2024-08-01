@@ -11,6 +11,9 @@ RUN apk update && \
     mosquitto-clients \
     shadow
 
+# Add the required configuration for FUSE
+RUN echo "user_allow_other" >> /etc/fuse.conf
+
 # Create necessary directories and set permissions
 RUN mkdir -p /encrypted /var/lib/mosquitto && \
     chown -R mosquitto:mosquitto /var/lib/mosquitto /encrypted  && \
