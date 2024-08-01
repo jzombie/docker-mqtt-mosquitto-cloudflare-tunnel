@@ -2,15 +2,29 @@ version: '3.8'
 
 services:
   mosquitto:
-    image: eclipse-mosquitto:latest
+    build: ./mosquitto
     container_name: mosquitto
     volumes:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
       - ./mosquitto/aclfile:/mosquitto/config/aclfile
-      - ./mosquitto/entrypoint.sh:/entrypoint.sh
-      - ./data/:/var/lib/mosquitto/
-    entrypoint: /entrypoint.sh
+      - ./data:/encrypted
     restart: unless-stopped
+    entrypoint: /entrypoint.sh
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - apparmor:unconfined
+    devices:
+      - /dev/fuse
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-t", "health", "-m", "health check"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    environment:
+      # TODO: Adjust as neeed (but not here!)
+      GOCRYPT_PASSWORD: your_secure_password_here
+    
 
   cloudflared:
     image: cloudflare/cloudflared:latest

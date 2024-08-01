@@ -2,11 +2,7 @@ name: CI
 
 on:
   push:
-    branches:
-      - main
   pull_request:
-    branches:
-      - main
 
 jobs:
   test-mosquitto:
@@ -16,7 +12,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Set up Docker Compose
+      - name: Set up Docker and Docker Compose
         run: |
           sudo apt-get update
           sudo apt-get install -y docker-compose
@@ -24,19 +20,42 @@ jobs:
       - name: Start Mosquitto service using Docker Compose
         run: docker-compose up -d mosquitto
 
-      - name: Wait for Mosquitto to be healthy
+      - name: Wait for Mosquitto to be healthy and publish message
         run: |
-          for i in {1..10}; do
-            if docker inspect --format='{{.State.Status}}' mosquitto | grep -q running; then
-              echo "Mosquitto is running"
-              exit 0
+          for i in {1..20}; do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' mosquitto)
+            echo "Current Mosquitto health status: $STATUS"
+            if [ "$STATUS" = "healthy" ]; then
+              echo "Mosquitto is healthy"
+              if docker exec mosquitto mosquitto_pub -t test/topic -m "Test message" -r; then
+                echo "Message published successfully"
+                exit 0
+              else
+                echo "Failed to publish message, retrying..."
+                sleep 10
+              fi
             else
               echo "Waiting for Mosquitto to be healthy..."
               sleep 10
             fi
           done
+
           echo "Mosquitto did not become healthy in time"
+          docker logs mosquitto
           exit 1
 
-      - name: Stop Mosquitto service using Docker Compose
-        run: docker-compose down
+      - name: Stop Mosquitto service and capture logs
+        run: |
+          docker-compose logs mosquitto
+          docker-compose down
+
+      - name: Check encrypted data
+        run: |
+          docker run --rm -v $(pwd)/data:/encrypted alpine:latest /bin/sh -c '
+            if [ -f /encrypted/gocryptfs.conf ] && [ -f /encrypted/gocryptfs.diriv ]; then
+              echo "Encrypted volume configuration files found";
+            else
+              echo "Encrypted volume configuration files not found";
+              exit 1;
+            fi
+          '
