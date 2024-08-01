@@ -56,8 +56,12 @@ jobs:
           docker logs mosquitto_with_healthcheck
           exit 1
 
-      - name: Publish test message to be retained
+      - name: Publish test message to be retained (as current user)
+        # Note: This is a non-standard implementation based on the ACL rule that the current username must be the first level in a topic
         run: docker exec mosquitto_with_healthcheck mosquitto_pub -u my_username -t my_username/topic -m "Test message" -r
+
+      - name: Publish test message to be retained (as another user)
+        run: docker exec mosquitto_with_healthcheck mosquitto_pub -u my_username -t other_username/topic -m "Another test message" -r
 
       - name: Stop Mosquitto service and capture logs
         run: |
@@ -116,4 +120,22 @@ jobs:
             echo "Failed to verify retained message"
             docker logs mosquitto_with_healthcheck
             exit 1
+          fi
+
+          # Verify that it cannot access another user's messages
+          RETAINED_MSG=$(timeout 10s docker exec mosquitto_with_healthcheck mosquitto_sub -u username -t other_username/topic -C 1 || true)
+          if [ -z "$RETAINED_MSG" ]; then
+            echo "Failed to verify retained message or command timed out"
+            docker logs mosquitto_with_healthcheck
+            exit 1
+          else
+            echo "Retained message received: $RETAINED_MSG"
+            if [ "$RETAINED_MSG" = "Test message" ]; then
+              echo "Retained message verified successfully"
+              exit 0
+            else
+              echo "Failed to verify retained message"
+              docker logs mosquitto_with_healthcheck
+              exit 1
+            fi
           fi
