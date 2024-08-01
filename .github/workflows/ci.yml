@@ -106,8 +106,10 @@ jobs:
             fi
           done
 
+          echo "Proceeding to verify retained image..."
+
           # Subscribe to the topic and verify the retained message
-          RETAINED_MSG=$(docker exec mosquitto_with_healthcheck mosquitto_sub -t test/topic -C 1)
+          RETAINED_MSG=$(timeout 10s docker exec mosquitto_with_healthcheck mosquitto_sub -t test/topic -C 1)
           echo "Retained message received: $RETAINED_MSG"
           if [ "$RETAINED_MSG" = "Test message" ]; then
             echo "Retained message verified successfully"
