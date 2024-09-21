@@ -44,7 +44,7 @@ The following steps will guide you through the process of setting up an MQTT bro
 
    ![Name Tunnel](assets/4.png)
 
-5. Choose **"Docker"** as your operating system. Copy the provided Docker command which includes your unique token.
+5. Choose **"Docker"** as your environment. Copy the provided Docker command which includes your unique token.
 
    ![Run Connector](assets/5.png)
 
