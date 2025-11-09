@@ -1,6 +1,8 @@
+# Docker MQTT Mosquitto Cloudflare Tunnel
+
+[![Ask DeepWiki][deepwiki-badge]][deepwiki-page]
 ![CI](https://github.com/jzombie/docker-mqtt-mosquitto-cloudflare-tunnel/actions/workflows/ci.yml/badge.svg)
 
-# Docker MQTT Mosquitto Cloudflare Tunnel
 
 **Note:** For examples of customization, another branch is available, which:
 
@@ -70,3 +72,7 @@ The following steps will guide you through the process of setting up an MQTT bro
 ```bash
 docker compose up
 ```
+
+[deepwiki-page]: https://deepwiki.com/jzombie/docker-mqtt-mosquitto-cloudflare-tunnel
+[deepwiki-badge]: https://deepwiki.com/badge.svg
+
