@@ -63,6 +63,10 @@ The following steps will guide you through the process of setting up an MQTT bro
    - **Service**: Select the service type (HTTP).
    - **URL**: Set the URL to point to your Mosquitto service (e.g., `mosquitto:9001`). Docker will route the `mosquitto` hostname to the relevant `container_name` in the `docker-compose.yml`.
 
+     > This URL is INTERNAL to your Docker configuration and is NOT your public URL, nor public PORT.  
+     > It does use HTTP internally, but exposes it publicly as HTTPS (port 443) via the tunnel.
+ 
+
    ![Public Hostname](assets/6.png)
 
 4. Click **"Save hostname"** to finalize the configuration.
@@ -72,6 +76,16 @@ The following steps will guide you through the process of setting up an MQTT bro
 ```bash
 docker compose up
 ```
+
+---
+
+**IMPORTANT:** Your broker is now reachable at `https://<subdomain>.<hostname>` on port `443`.
+
+See this related issue for additional troubleshooting: https://github.com/jzombie/docker-mqtt-mosquitto-cloudflare-tunnel/issues/25
+
+---
+
+
 
 [deepwiki-page]: https://deepwiki.com/jzombie/docker-mqtt-mosquitto-cloudflare-tunnel
 [deepwiki-badge]: https://deepwiki.com/badge.svg
