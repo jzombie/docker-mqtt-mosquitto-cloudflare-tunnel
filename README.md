@@ -1,6 +1,5 @@
 # Docker MQTT Mosquitto Cloudflare Tunnel
 
-[![Ask DeepWiki][deepwiki-badge]][deepwiki-page]
 ![CI](https://github.com/jzombie/docker-mqtt-mosquitto-cloudflare-tunnel/actions/workflows/ci.yml/badge.svg)
 
 
@@ -84,9 +83,4 @@ docker compose up
 See this related issue for additional troubleshooting: https://github.com/jzombie/docker-mqtt-mosquitto-cloudflare-tunnel/issues/25
 
 ---
-
-
-
-[deepwiki-page]: https://deepwiki.com/jzombie/docker-mqtt-mosquitto-cloudflare-tunnel
-[deepwiki-badge]: https://deepwiki.com/badge.svg
 
